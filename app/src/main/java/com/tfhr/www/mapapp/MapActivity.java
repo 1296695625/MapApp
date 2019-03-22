@@ -2,18 +2,25 @@ package com.tfhr.www.mapapp;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,10 +62,10 @@ import com.baidu.mapapi.walknavi.params.WalkNaviLaunchParam;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapActivity extends AppCompatActivity {
+public class MapActivity extends AppCompatActivity implements CheckboxRecycleAdapter.RecyclerViewItemClickListener,View.OnClickListener {
     private MapView mapView;
     private BaiduMap map;
-    private Button location, navigate,btSearch;
+    private Button location, navigate,btSearch,btTuli;
     private LocationClient locationClient;
     private WalkNavigateHelper walkNavigateHelper;
     private EditText editText;
@@ -66,6 +73,11 @@ public class MapActivity extends AppCompatActivity {
     private ListView searchResult;
     private LatLng mylocation;
     private List<PoiInfo> poiInfos;
+    private RecyclerView drawleft;
+    private DrawerLayout drawerLayout;
+    private LinearLayout bottomLL;
+    private ArrayList<String> data=new ArrayList<>();
+    private CheckboxRecycleAdapter adapter;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -73,8 +85,66 @@ public class MapActivity extends AppCompatActivity {
         setContentView(R.layout.activity_map);
         editText=findViewById(R.id.poimsg);
         mapView = findViewById(R.id.mapview);
+        bottomLL=findViewById(R.id.bottom_ll);
         searchResult=findViewById(R.id.poisearchlistview);
         btSearch=findViewById(R.id.poisearch);
+        btTuli=findViewById(R.id.bt_tuli);
+        btTuli.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(bottomLL.getVisibility()==View.INVISIBLE){
+                    bottomLL.setVisibility(View.VISIBLE);
+                }else {
+                    bottomLL.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
+        drawleft=findViewById(R.id.left_layout_map);
+        drawerLayout=findViewById(R.id.drawlayout_map);
+        drawerLayout.addDrawerListener(new DrawerLayout.SimpleDrawerListener() {
+            @Override
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+                super.onDrawerSlide(drawerView, slideOffset);
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+            }
+
+            @Override
+            public void onDrawerStateChanged(int newState) {
+                super.onDrawerStateChanged(newState);
+            }
+        });
+        data.add("配变分布");
+        data.add("开关分布");
+        data.add("变电站展示");
+        data.add("线路展示");
+        data.add("分段开关");
+        data.add("联络开关");
+        data.add("单主变变电站");
+        data.add("营配校核");
+        data.add("低压采集可视化");
+//        drawleft.addHeaderView();
+        RecyclerView.LayoutManager manager=new LinearLayoutManager(this);
+        drawleft.setLayoutManager(manager);
+//        drawleft.setAdapter(new ArrayAdapter(this,R.layout.checkbox_item,R.id.item_checkbox_tv,data));
+        if(null==adapter){
+            adapter=new CheckboxRecycleAdapter(this,data);
+        }
+        drawleft.setAdapter(adapter);
+//        drawleft.(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//
+//            }
+//        });
         editText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -291,6 +361,18 @@ public class MapActivity extends AppCompatActivity {
         mapView.onDestroy();
         mapView = null;
         super.onDestroy();
+    }
+
+    @Override
+    public void recyclerItemClick(int position) {
+        //根据选择的item，刷新地图的逻辑
+        drawerLayout.closeDrawer(Gravity.START);
+        Log.v("tfhr",""+data.get(position)+position);
+    }
+
+    @Override
+    public void onClick(View v) {
+
     }
 
     class MyLocationListener extends BDAbstractLocationListener {

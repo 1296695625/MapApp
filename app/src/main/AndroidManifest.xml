@@ -47,16 +47,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MapActivity"
-            android:windowSoftInputMode="stateHidden|adjustPan"
-            />
-
+        <activity
+            android:name=".MapActivity"
+            android:windowSoftInputMode="stateHidden|adjustPan" />
+        <service android:name=".LocalService"/>
+        <service android:name=".RemoteService"
+            android:process=":remote"
+            ></service>
         <service
             android:name="com.baidu.location.f"
             android:enabled="true"
             android:process=":remote" />
 
-        <activity android:name=".NavigateGuidActivity"></activity>
+        <activity
+            android:name=".NavigateGuidActivity"
+            android:permission="admin" />
+        <activity android:name=".DrawLayoutActivity"></activity>
     </application>
 
 </manifest>

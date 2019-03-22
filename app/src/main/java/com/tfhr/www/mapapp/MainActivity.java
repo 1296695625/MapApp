@@ -14,7 +14,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 
 public class MainActivity extends AppCompatActivity {
-    private Button map;
+    private Button map,drawlayout;
     private ListView listView;
     private MyAdapter adapter;
     float starty;
@@ -29,6 +29,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(MainActivity.this, MapActivity.class));
+            }
+        });
+        drawlayout=findViewById(R.id.drawlayout);
+        drawlayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this,DrawLayoutActivity.class
+                ));
             }
         });
         if (null == adapter) {
