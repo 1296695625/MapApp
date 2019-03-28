@@ -1,12 +1,16 @@
 package com.tfhr.www.mapapp;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -15,11 +19,15 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -62,10 +70,10 @@ import com.baidu.mapapi.walknavi.params.WalkNaviLaunchParam;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapActivity extends AppCompatActivity implements CheckboxRecycleAdapter.RecyclerViewItemClickListener,View.OnClickListener {
+public class MapActivity extends AppCompatActivity implements CheckboxRecycleAdapter.RecyclerViewItemClickListener, View.OnClickListener, MyPopmenu.PopItemClickListener {
     private MapView mapView;
     private BaiduMap map;
-    private Button location, navigate,btSearch,btTuli;
+    private Button location, navigate, btSearch, btTuli;
     private LocationClient locationClient;
     private WalkNavigateHelper walkNavigateHelper;
     private EditText editText;
@@ -76,31 +84,37 @@ public class MapActivity extends AppCompatActivity implements CheckboxRecycleAda
     private RecyclerView drawleft;
     private DrawerLayout drawerLayout;
     private LinearLayout bottomLL;
-    private ArrayList<String> data=new ArrayList<>();
+    private ArrayList<DrawlayoutItem> data = new ArrayList<>();
     private CheckboxRecycleAdapter adapter;
+    private ActionBar actionBar;
+    private TextView dianwang, peibian;
+    private MyPopmenu peibianPop;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-        editText=findViewById(R.id.poimsg);
+        editText = findViewById(R.id.poimsg);
         mapView = findViewById(R.id.mapview);
-        bottomLL=findViewById(R.id.bottom_ll);
-        searchResult=findViewById(R.id.poisearchlistview);
-        btSearch=findViewById(R.id.poisearch);
-        btTuli=findViewById(R.id.bt_tuli);
+        bottomLL = findViewById(R.id.bottom_ll);
+        searchResult = findViewById(R.id.poisearchlistview);
+        btSearch = findViewById(R.id.poisearch);
+        btTuli = findViewById(R.id.bt_tuli);
+        initActionBar();
         btTuli.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(bottomLL.getVisibility()==View.INVISIBLE){
+                if (bottomLL.getVisibility() == View.INVISIBLE) {
                     bottomLL.setVisibility(View.VISIBLE);
-                }else {
+                } else {
                     bottomLL.setVisibility(View.INVISIBLE);
                 }
             }
         });
-        drawleft=findViewById(R.id.left_layout_map);
-        drawerLayout=findViewById(R.id.drawlayout_map);
+        drawleft = findViewById(R.id.left_layout_map);
+        drawerLayout = findViewById(R.id.drawlayout_map);
+//        drawerLayout.setDrawerElevation(0);
+        drawerLayout.setScrimColor(getResources().getColor(R.color.lightwhite));
         drawerLayout.addDrawerListener(new DrawerLayout.SimpleDrawerListener() {
             @Override
             public void onDrawerSlide(View drawerView, float slideOffset) {
@@ -122,21 +136,21 @@ public class MapActivity extends AppCompatActivity implements CheckboxRecycleAda
                 super.onDrawerStateChanged(newState);
             }
         });
-        data.add("配变分布");
-        data.add("开关分布");
-        data.add("变电站展示");
-        data.add("线路展示");
-        data.add("分段开关");
-        data.add("联络开关");
-        data.add("单主变变电站");
-        data.add("营配校核");
-        data.add("低压采集可视化");
+        data.add(new DrawlayoutItem("配变分布", 0));
+        data.add(new DrawlayoutItem("开关分布", 0));
+        data.add(new DrawlayoutItem("变电站展示", 0));
+        data.add(new DrawlayoutItem("线路展示", 0));
+        data.add(new DrawlayoutItem("分段开关", 0));
+        data.add(new DrawlayoutItem("联络开关", 0));
+        data.add(new DrawlayoutItem("单主变变电站", 0));
+        data.add(new DrawlayoutItem("营配校核", 0));
+        data.add(new DrawlayoutItem("低压采集可视化", 0));
 //        drawleft.addHeaderView();
-        RecyclerView.LayoutManager manager=new LinearLayoutManager(this);
+        RecyclerView.LayoutManager manager = new LinearLayoutManager(this);
         drawleft.setLayoutManager(manager);
 //        drawleft.setAdapter(new ArrayAdapter(this,R.layout.checkbox_item,R.id.item_checkbox_tv,data));
-        if(null==adapter){
-            adapter=new CheckboxRecycleAdapter(this,data);
+        if (null == adapter) {
+            adapter = new CheckboxRecycleAdapter(this, data);
         }
         drawleft.setAdapter(adapter);
 //        drawleft.(new AdapterView.OnItemClickListener() {
@@ -158,23 +172,23 @@ public class MapActivity extends AppCompatActivity implements CheckboxRecycleAda
 
             @Override
             public void afterTextChanged(Editable s) {
-                if(TextUtils.isEmpty(editText.getText())){
+                if (TextUtils.isEmpty(editText.getText())) {
                     searchResult.setVisibility(View.GONE);
                 }
             }
         });
-        poiSearch=PoiSearch.newInstance();
+        poiSearch = PoiSearch.newInstance();
         poiSearch.setOnGetPoiSearchResultListener(new OnGetPoiSearchResultListener() {
             @Override
             public void onGetPoiResult(PoiResult poiResult) {
-                poiInfos=poiResult.getAllPoi();
-                Log.v("tfhr","poiresult-"+poiResult.getTotalPoiNum());
-                if(null!=poiInfos){
+                poiInfos = poiResult.getAllPoi();
+                Log.v("tfhr", "poiresult-" + poiResult.getTotalPoiNum());
+                if (null != poiInfos) {
                     searchResult.setVisibility(View.VISIBLE);
                     searchResult.setAdapter(new PoiListViewAdapter());
-                }else {
+                } else {
                     searchResult.setVisibility(View.GONE);
-                    Toast.makeText(MapActivity.this,"no data",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MapActivity.this, "no data", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -265,16 +279,87 @@ public class MapActivity extends AppCompatActivity implements CheckboxRecycleAda
         //39.903220001487554,116.38795626135766
 //        39.90382885310239116.38506371761555
 //        39.89948374716881116.3819735466612
+        //设置标点
         setMarker();
+    }
+    private String[] names=new String[]{"变电站","线路","馈线","配变"} ;
+    private void initActionBar() {
+        actionBar = getSupportActionBar();
+        ActionBar.LayoutParams layoutParams = new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT,
+                ActionBar.LayoutParams.MATCH_PARENT);
+        layoutParams.gravity = Gravity.CENTER | Gravity.CENTER;
+        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setDisplayShowHomeEnabled(false);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setElevation(0);
+        View v = LayoutInflater.from(this).inflate(R.layout.layout_actionbar, null);
+        TextView centerTitle = v.findViewById(R.id.centerTitle);
+        centerTitle.setText("map");
+        dianwang = v.findViewById(R.id.dianwang);
+        dianwang.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+            }
+        });
+        peibian = v.findViewById(R.id.peibian);
+        peibian.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (null == peibianPop) {
+                    peibianPop=new MyPopmenu(MapActivity.this);
+                }
+                if(peibianPop.isShow()){
+                    peibianPop.dismiss();
+                }
+                peibianPop.setData(names);
+                peibianPop.setDropDownView(peibian);
+                peibianPop.setView(R.layout.custom_pop);
+                peibianPop.initView();
+            }
+        });
+        ImageView showDrawlayout = v.findViewById(R.id.showdrawlayout);
+        showDrawlayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (drawerLayout.isDrawerOpen(Gravity.START)) {
+                    drawerLayout.closeDrawer(Gravity.START);
+                } else {
+                    drawerLayout.openDrawer(Gravity.START);
+                }
+            }
+        });
+        Log.v("tfhr", "actionbar");
+        actionBar.setCustomView(v, layoutParams);
+        actionBar.show();
+        Toolbar parent = (Toolbar) v.getParent();
+        parent.setContentInsetsAbsolute(0, 0);
+
+        Window window = getWindow();
+        //取消状态栏透明
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        //添加Flag把状态栏设为可绘制模式
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        //设置状态栏颜色
+        window.setStatusBarColor(getResources().getColor(R.color.lightwhite));
+        //设置系统状态栏处于可见状态
+        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+        //让view不根据系统窗口来调整自己的布局
+        ViewGroup mContentView = (ViewGroup) window.findViewById(Window.ID_ANDROID_CONTENT);
+        View mChildView = mContentView.getChildAt(0);
+        if (mChildView != null) {
+//            ViewCompat.setFitsSystemWindows(mChildView, false);
+//            ViewCompat.requestApplyInsets(mChildView);
+        }
     }
 
     private void search() {
-        if(null==mylocation){
-            Toast.makeText(this," please get your location first",Toast.LENGTH_SHORT).show();
+        if (null == mylocation) {
+            Toast.makeText(this, " please get your location first", Toast.LENGTH_SHORT).show();
             return;
         }
-        Log.v("tfhr","mylocation lat"+mylocation.latitude);
-        poiSearch.searchNearby(new PoiNearbySearchOption().location(mylocation).radius(1000).keyword(editText.getText()+"").pageNum(10).tag(editText.getText()+""));
+        Log.v("tfhr", "mylocation lat" + mylocation.latitude);
+        poiSearch.searchNearby(new PoiNearbySearchOption().location(mylocation).radius(1000).keyword(editText.getText() + "").pageNum(10).tag(editText.getText() + ""));
 
     }
 
@@ -343,6 +428,10 @@ public class MapActivity extends AppCompatActivity implements CheckboxRecycleAda
 
     @Override
     protected void onResume() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm.isActive()) {
+            imm.hideSoftInputFromWindow(btSearch.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+        }
         mapView.onResume();
         super.onResume();
     }
@@ -355,7 +444,9 @@ public class MapActivity extends AppCompatActivity implements CheckboxRecycleAda
 
     @Override
     protected void onDestroy() {
-        if(null!=poiSearch){poiSearch.destroy();}
+        if (null != poiSearch) {
+            poiSearch.destroy();
+        }
         locationClient.stop();
         map.setMyLocationEnabled(false);
         mapView.onDestroy();
@@ -367,12 +458,18 @@ public class MapActivity extends AppCompatActivity implements CheckboxRecycleAda
     public void recyclerItemClick(int position) {
         //根据选择的item，刷新地图的逻辑
         drawerLayout.closeDrawer(Gravity.START);
-        Log.v("tfhr",""+data.get(position)+position);
+        Log.v("tfhr", data.get(position).getName() + "");
+        Log.v("tfhr", "position" + position);
     }
 
     @Override
     public void onClick(View v) {
 
+    }
+
+    @Override
+    public void popItemClick(int position, String name) {
+        Log.v("tfhr","pei bian"+name);
     }
 
     class MyLocationListener extends BDAbstractLocationListener {
@@ -381,22 +478,25 @@ public class MapActivity extends AppCompatActivity implements CheckboxRecycleAda
             if (null == bdLocation) {
                 return;
             }
-            mylocation=new LatLng(bdLocation.getLatitude(),bdLocation.getLongitude());
+            mylocation = new LatLng(bdLocation.getLatitude(), bdLocation.getLongitude());
             MyLocationData locationData = new MyLocationData.Builder().accuracy(bdLocation.getRadius()).latitude(bdLocation.getLatitude()).longitude(bdLocation.getLongitude()).
                     direction(bdLocation.getDirection()).build();
             map.setMyLocationData(locationData);
         }
     }
-    class PoiListViewAdapter extends BaseAdapter{
+
+    class PoiListViewAdapter extends BaseAdapter {
         @Override
         public int getCount() {
-            if(null!=poiInfos){return poiInfos.size();}
+            if (null != poiInfos) {
+                return poiInfos.size();
+            }
             return 0;
         }
 
         @Override
         public Object getItem(int position) {
-            if(null!=poiInfos){
+            if (null != poiInfos) {
                 poiInfos.get(position);
             }
             return null;
@@ -410,18 +510,19 @@ public class MapActivity extends AppCompatActivity implements CheckboxRecycleAda
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             ViewHolder holder;
-            if(null==convertView){
-                convertView= LayoutInflater.from(MapActivity.this).inflate(R.layout.item_layout,parent, false);
-                holder=new ViewHolder();
-                holder.tv=convertView.findViewById(R.id.item_tv);
+            if (null == convertView) {
+                convertView = LayoutInflater.from(MapActivity.this).inflate(R.layout.item_layout, parent, false);
+                holder = new ViewHolder();
+                holder.tv = convertView.findViewById(R.id.item_tv);
                 convertView.setTag(holder);
-            }else {
-                holder= (ViewHolder) convertView.getTag();
+            } else {
+                holder = (ViewHolder) convertView.getTag();
             }
-            holder.tv.setText(poiInfos.get(position).getName()+"");
+            holder.tv.setText(poiInfos.get(position).getName() + "");
             return convertView;
         }
-        class ViewHolder{
+
+        class ViewHolder {
             TextView tv;
         }
     }

@@ -7,5 +7,13 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
-
+    <style name="TopActionbar" parent="Theme.AppCompat.Light">
+        <item name="android:windowActionBar" >true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+    <style name="BaseBars" parent="@style/Widget.AppCompat.Light.ActionBar">
+        <item name="android:background">@color/myactionbar</item>
+        <item name="android:contentInsetStart">0dp</item>
+        <item name="android:contentInsetEnd">0dp</item>
+    </style>
 </resources>

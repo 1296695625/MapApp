@@ -7,17 +7,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 
 public class CheckboxRecycleAdapter extends RecyclerView.Adapter<CheckboxRecycleAdapter.MyViewHolder> {
-    private ArrayList<String> data;
+    private ArrayList<DrawlayoutItem> data;
     private Context context;
     private RecyclerViewItemClickListener listener;
 
-    public CheckboxRecycleAdapter(Context c, ArrayList<String> list) {
+    public CheckboxRecycleAdapter(Context c, ArrayList<DrawlayoutItem> list) {
         this.data = list;
         this.context = c;
         this.listener = (RecyclerViewItemClickListener) c;
@@ -34,14 +35,24 @@ public class CheckboxRecycleAdapter extends RecyclerView.Adapter<CheckboxRecycle
     public long getItemId(int position) {
         return position;
     }
+
     @Override
     public void onBindViewHolder(MyViewHolder myViewHolder, final int i) {
-        myViewHolder.tv.setText(data.get(i) + "");
+        if (null != data) {
+            myViewHolder.tv.setText(data.get(i).getName() + "");
+            myViewHolder.ck.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if(isChecked){
+                        data.get(i).setIsCheck(1);
+                    }else {data.get(i).setIsCheck(0);}
+                }
+            });
+        }
         myViewHolder.l.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.v("tfhr","click item "+i);
-                    listener.recyclerItemClick(i);
+                listener.recyclerItemClick(i);
             }
         });
     }
@@ -58,6 +69,7 @@ public class CheckboxRecycleAdapter extends RecyclerView.Adapter<CheckboxRecycle
         TextView tv;
         CheckBox ck;
         LinearLayout l;
+
         public MyViewHolder(View itemView) {
             super(itemView);
 
@@ -70,7 +82,7 @@ public class CheckboxRecycleAdapter extends RecyclerView.Adapter<CheckboxRecycle
             });
             tv = itemView.findViewById(R.id.item_checkbox_tv);
             ck = itemView.findViewById(R.id.item_checkbox);
-            l=itemView.findViewById(R.id.item_checkbox_l);
+            l = itemView.findViewById(R.id.item_checkbox_l);
         }
     }
 

@@ -49,6 +49,8 @@
         </activity>
         <activity
             android:name=".MapActivity"
+            android:theme="@style/TopActionbar"
+            android:launchMode="singleTask"
             android:windowSoftInputMode="stateHidden|adjustPan" />
         <service android:name=".LocalService"/>
         <service android:name=".RemoteService"
