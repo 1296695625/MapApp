@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -19,12 +20,13 @@ public class RemoteService extends Service {
         if(null==connection){
             connection=new RemoteConnection();
         }
+        Log.v("tfhr","init remoteservice");
         service=new MyRemoteS();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.v("tfhe","connect to local");
+        Log.v("tfhr","connect to local");
         Intent remote=new Intent();
         remote.setClass(this,LocalService.class);
         bindService(remote,connection, Context.BIND_IMPORTANT);

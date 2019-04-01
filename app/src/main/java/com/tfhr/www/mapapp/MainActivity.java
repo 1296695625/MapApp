@@ -1,6 +1,7 @@
 package com.tfhr.www.mapapp;
 
 import android.content.Intent;
+import android.os.Build;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -18,7 +19,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
-    private Button map,drawlayout;
+    private Button map, drawlayout;
     private ListView listView;
     private MyAdapter adapter;
     float starty;
@@ -35,19 +36,19 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, MapActivity.class));
             }
         });
-        drawlayout=findViewById(R.id.drawlayout);
+        drawlayout = findViewById(R.id.drawlayout);
         drawlayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this,DrawLayoutActivity.class
-                ));
+                initDoubleService();
+//                startActivity(new Intent(MainActivity.this, DrawLayoutActivity.class));
             }
         });
         if (null == adapter) {
             adapter = new MyAdapter(this);
         }
         LinearLayout ll = (LinearLayout) LayoutInflater.from(this).inflate(R.layout.listview_header, null);
-        final LinearLayout l=ll.findViewById(R.id.layout);
+        final LinearLayout l = ll.findViewById(R.id.layout);
         ProgressBar progressBar = ll.findViewById(R.id.progressbar);
 //        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
 //            @Override
@@ -76,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
 //                        return true;
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        if (v.getTop() == 201 && event.getY() - starty > 200 && l.getVisibility()==View.GONE) {
+                        if (v.getTop() == 201 && event.getY() - starty > 200 && l.getVisibility() == View.GONE) {
                             Log.v("tfhr", "move" + (event.getRawY() - starty));
                             l.setVisibility(View.VISIBLE);
                         } else {
@@ -94,5 +95,17 @@ public class MainActivity extends AppCompatActivity {
                 return flag;
             }
         });
+    }
+
+    private void initDoubleService() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            startService(new Intent(this, MyJobService.class));
+            Log.v("tfhr","init version >= lollipop");
+            return;
+        } else {
+            Log.v("tfhr","init version < lollipop");
+            startService(new Intent(this, LocalService.class));
+            startService(new Intent(this, RemoteService.class));
+        }
     }
 }

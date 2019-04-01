@@ -26,12 +26,13 @@ public class LocalService extends Service {
         if (null == connection) {
             connection = new LocalConnection();
         }
+        Log.v("tfhr","init local");
         localService = new MyService();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.v("tfhr","localservice ssart");
+        Log.v("tfhr","localservice start");
         Intent intent1=new Intent();
         intent1.setClass(this,RemoteService.class);
         bindService(intent1,connection, Context.BIND_IMPORTANT);
